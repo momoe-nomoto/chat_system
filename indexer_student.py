@@ -45,7 +45,7 @@ class Index:
         """
         # IMPLEMENTATION
         # ---- start your code ---- #
-        self.msgs.append(m.strip())
+        self.msgs.append(m)
         self.total_msgs+=1
         # ---- end of your code --- #
         return
@@ -63,18 +63,18 @@ class Index:
 
         # IMPLEMENTATION
         # ---- start your code ---- #
-        if ' ' in m:
+        if ' ' in m: #Recognizing the roman number
             m = ''.join(ch for ch in m if ch not in set(string.punctuation))
             #An attempt to address separate words bug
         for word in m.split(): 
-            self.index.setdefault(word,[]).append(l)
-        self.total_words = len(self.index)
+            self.index[word] = self.index.get(word,[]) + [l]
+        self.total_words += len(m)
         # ---- end of your code --- #
         return
 
     # implement: query interface
 
-    def search(self, term):
+    def search(self, terms):
         """
         return a list of tupple.
         Example:
@@ -88,18 +88,11 @@ class Index:
         msgs = []
         # IMPLEMENTATION
         # ---- start your code ---- #
-        if len(term.split()) == 1:  #searching for one term
-            for i in set(self.index[term]): #debug duplicates
-                msgs.append((i, self.msgs[i].strip()))
-        else:
-            for word in term.split(): #searching for phrases
-                for i in set(self.index[word]): 
-                    msgs.append((i, self.msgs[i].strip()))
-            msgs = list(set(msg for msg in msgs if msgs.count(msg) > 1))
-            #Do recognize that it will print lines that contain both
-            #of these words not necessarily in order
-            
-        #msgs = [msg for msg in msgs if msgs.count(msg) > 1]
+        term = terms.split()
+        if term[0] in self.index.keys():
+            for i in set(self.index[term[0]]):
+                if terms in self.msgs[i]:
+                    msgs.append((i, self.msgs[i]))
         # ---- end of your code --- #
         return msgs
 
@@ -121,8 +114,7 @@ class PIndex(Index):
         # ---- start your code ---- #
         file = open(self.name, 'r')
         for line in file.readlines():
-            super().add_msg_and_index(line)
-        file.close()
+            self.add_msg_and_index(line.rstrip())
         # ---- end of your code --- #
         return
 
@@ -152,12 +144,19 @@ class PIndex(Index):
         poem = []
         # IMPLEMENTATION
         # ---- start your code ---- #
-        start_line = super().search(self.int2roman.get(p) + ".")
-        for i in range(start_line[0][0], self.total_msgs):
-            if self.msgs[i]!=self.int2roman.get(p+1)+".":
-                poem.append(self.msgs[i].strip())
-            else:
+        temp = self.search(self.int2roman[p] + ".")
+        if temp:
+            [(start_line, m)] = temp
+        else:
+            return []
+        # finding if the term exists
+        end_line = self.get_msg_size()
+        while start_line < end_line:
+            line = self.get_msg(start_line)
+            if line == self.int2roman[p+1] + ".":
                 break
+            poem.append(line)
+            start_line+=1
         # ---- end of your code --- #
         return poem
 
@@ -167,5 +166,5 @@ if __name__ == "__main__":
     # the next two lines are just for testing
     p3 = sonnets.get_poem(3)
     print(p3)
-    s_love = sonnets.search("love")
+    s_love = sonnets.search("five hundred")
     print(s_love)
