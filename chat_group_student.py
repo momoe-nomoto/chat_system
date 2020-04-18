@@ -84,13 +84,16 @@ class Group:
 
         # IMPLEMENTATION
         # ---- start your code ---- #
-        if peer_in_group:
-            self.chat_grps[group_key].append(me)
-            self.members[me] = S_TALKING
+        if me in self.members and peer in self.members: #In case someone accidentally adds someone not in system
+            if peer_in_group:
+                self.chat_grps[group_key].append(me)
+                self.members[me] = S_TALKING
+            else:
+                self.grp_ever += 1
+                self.chat_grps[self.grp_ever]=[me, peer]
+                self.members[me] = self.members[peer] = S_TALKING
         else:
-            self.grp_ever += 1
-            self.chat_grps[self.grp_ever]=[me, peer]
-            self.members[me] = self.members[peer] = S_TALKING
+            print("{} or {} not found".format(me, peer))
         # ---- end of your code --- #
         return
 
@@ -101,15 +104,18 @@ class Group:
         """
         # IMPLEMENTATION
         # ---- start your code ---- #
-        in_group, group_key = self.find_group(me)
-        group_members = self.chat_grps[group_key]
-        if in_group:
-            group_members.remove(me)
-            self.members[me] = S_ALONE
-            if len(group_members) == 1:
-                self.members[group_members[0]] = S_ALONE
-                del group_members[0]
-                del self.chat_grps[group_key]
+        if me in self.members: #Check if in system
+            in_group, group_key = self.find_group(me)
+            group_members = self.chat_grps[group_key]
+            if in_group:
+                group_members.remove(me)
+                self.members[me] = S_ALONE
+                if len(group_members) == 1:
+                    self.members[group_members[0]] = S_ALONE
+                    del group_members[0]
+                    del self.chat_grps[group_key]
+        else:
+            print("{} or {} not found".format(me, peer))
         # ---- end of your code --- #
         return
 
@@ -129,12 +135,15 @@ class Group:
         my_list = []
         # IMPLEMENTATION
         # ---- start your code ---- #
-        in_group, group_key = self.find_group(me)
-        if in_group:
-            my_list.append(me)
-            for member in self.chat_grps[group_key]:
-                if member != me:
-                    my_list.append(member)
+        if me in self.members: #check if in system
+            in_group, group_key = self.find_group(me)
+            if in_group:
+                my_list.append(me)
+                for member in self.chat_grps[group_key]:
+                    if member != me:
+                        my_list.append(member)
+        else:
+            print(me, "not found")
         # ---- end of your code --- #
         return my_list
 
@@ -176,6 +185,7 @@ if __name__ == "__main__":
     print()
     g.connect('c', 'a')
     print(g.list_all())
+    
     print("Members in my group:", g.list_me('b'))
     print("Number of loners:", g.get_num_loners())
     print("Biggest group:", g.get_biggest_group())
