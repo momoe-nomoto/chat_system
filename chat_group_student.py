@@ -31,9 +31,7 @@ class Group:
 
         # IMPLEMENTATION
         # ---- start your code ---- #
-        if name in self.members.keys():
-            return True
-        return False
+        return name in self.members.keys()
         # ---- end of your code --- #
 
     # implement
@@ -43,14 +41,11 @@ class Group:
         """
         # IMPLEMENTATION
         # ---- start your code ---- #
+        self.disconnect(name)
         try:
             del self.members[name]
         except KeyError:
             print(name, "not found")
-        else:
-            in_group, group_key = self.find_group(name)
-            if in_group:
-                self.chat_grps[group_key].remove(name)
         # ---- end of your code --- #
         return
 
@@ -86,9 +81,12 @@ class Group:
         # ---- start your code ---- #
         if me in self.members and peer in self.members: #In case someone accidentally adds someone not in system
             if peer_in_group:
-                self.chat_grps[group_key].append(me)
-                self.members[me] = S_TALKING
+                print(peer, "is talking already, connect!")
+                if me not in self.chat_grps[group_key]:
+                    self.chat_grps[group_key].append(me)
+                    self.members[me] = S_TALKING
             else:
+                print(peer, "is idle as well")
                 self.grp_ever += 1
                 self.chat_grps[self.grp_ever]=[me, peer]
                 self.members[me] = self.members[peer] = S_TALKING
@@ -106,13 +104,12 @@ class Group:
         # ---- start your code ---- #
         if me in self.members: #Check if in system
             in_group, group_key = self.find_group(me)
-            group_members = self.chat_grps[group_key]
             if in_group:
-                group_members.remove(me)
+                self.chat_grps[group_key].remove(me)
                 self.members[me] = S_ALONE
-                if len(group_members) == 1:
-                    self.members[group_members[0]] = S_ALONE
-                    del group_members[0]
+                if len(self.chat_grps[group_key]) == 1:# peer may be alone
+                    peer = self.chat_grps[group_key].pop()
+                    self.members[peer] = S_ALONE
                     del self.chat_grps[group_key]
         else:
             print("{} or {} not found".format(me, peer))
@@ -135,13 +132,15 @@ class Group:
         my_list = []
         # IMPLEMENTATION
         # ---- start your code ---- #
-        if me in self.members: #check if in system
+        if me in self.members.keys(): #check if in system
+            my_list.append(me)
             in_group, group_key = self.find_group(me)
             if in_group:
-                my_list.append(me)
                 for member in self.chat_grps[group_key]:
                     if member != me:
                         my_list.append(member)
+                # [my_list.append(member) for member in self.chat_grps[group_key]
+                # if member != me]
         else:
             print(me, "not found")
         # ---- end of your code --- #
@@ -163,11 +162,11 @@ class Group:
         """
         return max(self.chat_grps.values(), key=len)
 
-    def two_member_groups(self):
+    def groups_with_n_member(self, n):
         """
-        returns the groups with two members
+        returns the groups with n members
         """
-        return [group for group in self.chat_grps.values() if len(group) == 2]
+        return [group for group in self.chat_grps.values() if len(group) == n] 
         
 
 if __name__ == "__main__":
@@ -180,7 +179,7 @@ if __name__ == "__main__":
 
     g.connect('a', 'b')
     print(g.list_all())
-    print("Groups with two members:", g.two_member_groups())
+    print("Groups with 2 members:", g.groups_with_n_member(2))
     print("Biggest group:", g.get_biggest_group())
     print()
     g.connect('c', 'a')
@@ -189,7 +188,7 @@ if __name__ == "__main__":
     print("Members in my group:", g.list_me('b'))
     print("Number of loners:", g.get_num_loners())
     print("Biggest group:", g.get_biggest_group())
-    print("Groups with two members:", g.two_member_groups())
+    print("Groups with three members:", g.groups_with_n_member(3))
     print()
     g.leave('c')
     print(g.list_all())
